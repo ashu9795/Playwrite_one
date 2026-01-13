@@ -1,20 +1,24 @@
 import { test, expect } from '@playwright/test';
+import { login } from '../utils/login.js';
+import { loginScenarios } from '../testData/loginData.js';
+
 require('dotenv').config();
 
-test('PortFolio Test', async ({ page }) => {
+test.describe("Login test scenarios", () => {
 
-  await page.goto(process.env.SITE_BASE_URL);
+  for (const data of loginScenarios) {
+    test(data.name, async ({ page }) => {
 
-  await page.getByRole('img').first().click();
+      await page.goto(process.env.SITE_BASE_URL);
 
-  console.log(process.env.SITE_USERNAME);
-  console.log(process.env.SITE_PASSWORD);
+      await login(page, data.username, data.password);
 
-  await page.locator('//*[@id="username"]').fill(process.env.SITE_USERNAME);
-  await page.getByRole('textbox', { name: 'Password' }).fill(process.env.SITE_PASSWORD);
+      if (data.success) {
+        await expect(page).not.toHaveURL(/login/i);
+      } else {
+        await expect(page.getByText(/invalid|error|required/i)).toBeVisible();
+      }
+    });
+  }
 
-  await page.locator('//*[@id="root"]/div/div[2]/div/form/button').click();
-
-  await page.waitForTimeout(10000);
 });
-
